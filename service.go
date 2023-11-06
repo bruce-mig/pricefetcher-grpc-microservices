@@ -21,7 +21,9 @@ type PriceService interface {
 
 type priceService struct{}
 
+// This is the business logic
 func (s *priceService) FetchPrice(_ context.Context, ticker string) (float64, error) {
+	// resp := http.Get("third-party-provider-url")
 	price, ok := prices[ticker]
 	if !ok {
 		return 0.0, fmt.Errorf("the given ticker (%s) is not available", ticker)
@@ -31,7 +33,7 @@ func (s *priceService) FetchPrice(_ context.Context, ticker string) (float64, er
 }
 
 type loggingService struct {
-	priceService
+	next PriceService
 }
 
 func (s loggingService) FetchPrice(ctx context.Context, ticker string) (price float64, err error) {
@@ -47,5 +49,5 @@ func (s loggingService) FetchPrice(ctx context.Context, ticker string) (price fl
 		}).Info("FetchPrice")
 	}(time.Now())
 
-	return s.priceService.FetchPrice(ctx, ticker)
+	return s.next.FetchPrice(ctx, ticker)
 }

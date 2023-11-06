@@ -45,7 +45,7 @@ func (s *JSONAPIServer) Run() {
 func (s *JSONAPIServer) handleFetchPrice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ticker := r.URL.Query().Get("ticker")
 	if len(ticker) == 0 {
-		return fmt.Errorf("Invalid ticker")
+		return fmt.Errorf("invalid ticker")
 	}
 	price, err := s.svc.FetchPrice(ctx, ticker)
 	if err != nil {
