@@ -1,4 +1,4 @@
-# A Stock Market PriceFetching microservice written in Golang
+# A gRPC microservice written in Golang
 
 # Installing protobuffer
 
@@ -18,7 +18,9 @@ brew install protobuff
 ```bash
 go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 go install google.golang.org/protobuf/cmd/protoc-gen-go
+```  
 
+```bash
 go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 ```
