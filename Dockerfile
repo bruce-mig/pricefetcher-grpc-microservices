@@ -7,8 +7,8 @@ COPY go.sum ./
 
 COPY . ./
 
-RUN go build -o /pricefetcher
+RUN go build -o /price
 
 EXPOSE 3000 4000
 
-CMD ["/pricefetcher"]
+CMD ["/price"]
