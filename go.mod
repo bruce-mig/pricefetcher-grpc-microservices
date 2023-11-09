@@ -3,6 +3,7 @@ module github.com/bruce-mig/pricefetcher-grpc-microservices
 go 1.18
 
 require (
+	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
