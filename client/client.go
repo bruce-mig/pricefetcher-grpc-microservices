@@ -32,8 +32,8 @@ func New(endpoint string) *Client {
 	}
 }
 
-func (c *Client) FetchPrice(ctx context.Context, ticker string) (*types.PriceResponse, error) {
-	endpoint := fmt.Sprintf("%s?ticker=%s", c.endpoint, ticker)
+func (c *Client) FetchPrice(ctx context.Context, symbol string) (*types.PriceResponse, error) {
+	endpoint := fmt.Sprintf("%s?symbol=%s", c.endpoint, symbol)
 
 	req, err := http.NewRequest("get", endpoint, nil)
 	if err != nil {
