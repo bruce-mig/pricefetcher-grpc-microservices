@@ -3,32 +3,43 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
-var prices = map[string]float64{
-	"BTC": 20000.0,
-	"ETH": 999.99,
-	"GG":  100000.0,
-}
-
-// PriceService is an interface that can fetch the price for any given ticker.
+// PriceService is an interface that can fetch the price for any given symbol.
 type PriceService interface {
-	FetchPrice(context.Context, string) (float64, error)
+	FetchPrice(context.Context, string) ([]byte, error)
 }
 
 type priceService struct{}
 
 // This is the business logic
-func (s *priceService) FetchPrice(_ context.Context, ticker string) (float64, error) {
-	// resp := http.Get("third-party-provider-url")
-	price, ok := prices[ticker]
-	if !ok {
-		return 0.0, fmt.Errorf("the given ticker (%s) is not available", ticker)
+func (s *priceService) FetchPrice(_ context.Context, symbol string) ([]byte, error) {
+
+	url := os.Getenv("API_URL") + "symbol=" + symbol + "&interval=1day&outputsize=30&format=json"
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
 	}
-	return price, nil
+
+	req.Header.Add("X-RapidAPI-Key", os.Getenv("XRapidAPIKey"))
+	req.Header.Add("X-RapidAPI-Host", os.Getenv("XRapidAPIHost2"))
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("the given symbol (%s) is not available", symbol)
+	}
+
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+
+	return body, nil
 
 }
 
@@ -36,7 +47,7 @@ type loggingService struct {
 	next PriceService
 }
 
-func (s loggingService) FetchPrice(ctx context.Context, ticker string) (price float64, err error) {
+func (s loggingService) FetchPrice(ctx context.Context, symbol string) (body []byte, err error) {
 	defer func(begin time.Time) {
 		reqID := ctx.Value("requestID")
 
@@ -44,10 +55,10 @@ func (s loggingService) FetchPrice(ctx context.Context, ticker string) (price fl
 			"requestID": reqID,
 			"took":      time.Since(begin),
 			"err":       err,
-			"price":     price,
-			"ticker":    ticker,
+			// "body":      body,
+			"symbol": symbol,
 		}).Info("FetchPrice")
 	}(time.Now())
 
-	return s.next.FetchPrice(ctx, ticker)
+	return s.next.FetchPrice(ctx, symbol)
 }
