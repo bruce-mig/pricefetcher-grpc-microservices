@@ -14,9 +14,11 @@ type APIFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request) e
 
 func makeAPIFunc(fn APIFunc) http.HandlerFunc {
 	ctx := context.Background()
+	// Define a constant for the request ID key
+	const requestIDKey ctxKey = "requestID"
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx = context.WithValue(ctx, "requestID", rand.Intn(1000000))
+		ctx = context.WithValue(ctx, requestIDKey, rand.Intn(1000000))
 
 		if err := fn(ctx, w, r); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": err.Error()})
@@ -43,17 +45,26 @@ func (s *JSONAPIServer) Run() {
 }
 
 func (s *JSONAPIServer) handleFetchPrice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ticker := r.URL.Query().Get("ticker")
-	if len(ticker) == 0 {
+	symbol := r.URL.Query().Get("symbol")
+	if len(symbol) == 0 {
 		return fmt.Errorf("invalid ticker")
 	}
-	price, err := s.svc.FetchPrice(ctx, ticker)
+	body, err := s.svc.FetchPrice(ctx, symbol)
 	if err != nil {
 		return err
 	}
+
+	var result types.PriceResponse
+	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to go struct pointer
+		fmt.Println("Can not unmarshal JSON")
+	}
+
 	resp := types.PriceResponse{
-		Price:  price,
-		Ticker: ticker,
+		Symbol:        result.Symbol,
+		Name:          result.Name,
+		DateTime:      result.DateTime,
+		Price:         result.Price,
+		PercentChange: result.PercentChange,
 	}
 	return writeJSON(w, http.StatusOK, resp)
 }
