@@ -2,12 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net"
 
 	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/encoding/protojson"
 )
+
+// Define a custom type for context keys
+type ctxKey string
 
 func makeGRPCServerAndRun(listenAddr string, svc PriceService) error {
 	grpcPriceFetcher := NewGRPCPriceFetcherServer(svc)
@@ -36,16 +41,34 @@ func NewGRPCPriceFetcherServer(svc PriceService) *GRPCPriceFetcherServer {
 
 func (s *GRPCPriceFetcherServer) FetchPrice(ctx context.Context, req *pb.PriceRequest) (*pb.PriceResponse, error) {
 
+	// Define a constant for the request ID key
+	const requestIDKey ctxKey = "requestID"
+
+	// Generate a random request ID
 	reqID := rand.Intn(100000)
-	ctx = context.WithValue(ctx, "requestID", reqID)
-	price, err := s.svc.FetchPrice(ctx, req.Ticker)
+
+	// Set the request ID in the context using the custom key type
+	ctx = context.WithValue(ctx, requestIDKey, reqID)
+	body, err := s.svc.FetchPrice(ctx, req.Symbol)
 	if err != nil {
 		return nil, err
 	}
 
+	data := &pb.PriceResponse{}
+	unmarshaler := protojson.UnmarshalOptions{DiscardUnknown: true}
+	err = unmarshaler.Unmarshal(body, data)
+
+	if err != nil {
+		fmt.Printf("failed to unmarshal:%+v", err)
+		return nil, err
+	}
+
 	resp := &pb.PriceResponse{
-		Ticker: req.Ticker,
-		Price:  float32(price),
+		Symbol:        data.Symbol,
+		Name:          data.Name,
+		Datetime:      data.Datetime,
+		Close:         data.Close,
+		PercentChange: data.PercentChange,
 	}
 	return resp, err
 }
