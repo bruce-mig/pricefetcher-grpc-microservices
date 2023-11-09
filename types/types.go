@@ -1,6 +1,9 @@
 package types
 
 type PriceResponse struct {
-	Ticker string  `json:"ticker"`
-	Price  float64 `json:"price"`
+	Symbol        string `json:"symbol"`
+	Name          string `json:"name"`
+	DateTime      string `json:"datetime"`
+	Price         string `json:"close"`
+	PercentChange string `json:"percent_change"`
 }
