@@ -9,9 +9,15 @@ import (
 
 	"github.com/bruce-mig/pricefetcher-grpc-microservices/client"
 	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/proto"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Some error occured. Err: %s", err)
+	}
 	var (
 		jsonAddr = flag.String("jsonAddr", ":3000", "listen address of the json service")
 		grpcAddr = flag.String("grpcAddr", ":4000", "listen address of the grpc service")
@@ -28,7 +34,7 @@ func main() {
 
 	go func() {
 		time.Sleep(3 * time.Second)
-		resp, err := grpcClient.FetchPrice(ctx, &pb.PriceRequest{Ticker: "BTC"})
+		resp, err := grpcClient.FetchPrice(ctx, &pb.PriceRequest{Symbol: "MSFT"})
 		if err != nil {
 			log.Fatal(err)
 		}
