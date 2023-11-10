@@ -4,6 +4,7 @@ option go_package = "github.com/bruce-mig/pricefetcher-grpc-microservices";
 
 service PriceFetcher {
     rpc FetchPrice(PriceRequest) returns (PriceResponse);
+    rpc FetchPriceServerStreaming(SymbolsList) returns (stream PriceResponse);
 }
 
 message PriceRequest {
@@ -17,4 +18,9 @@ message PriceResponse {
     string datetime = 3;
     string close = 4;
     string percent_change = 5;
+}
+
+
+message SymbolsList{
+    repeated PriceRequest symbols = 1;
 }

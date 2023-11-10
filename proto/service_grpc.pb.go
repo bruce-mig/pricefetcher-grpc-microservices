@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PriceFetcherClient interface {
 	FetchPrice(ctx context.Context, in *PriceRequest, opts ...grpc.CallOption) (*PriceResponse, error)
+	FetchPriceServerStreaming(ctx context.Context, in *SymbolsList, opts ...grpc.CallOption) (PriceFetcher_FetchPriceServerStreamingClient, error)
 }
 
 type priceFetcherClient struct {
@@ -42,11 +43,44 @@ func (c *priceFetcherClient) FetchPrice(ctx context.Context, in *PriceRequest, o
 	return out, nil
 }
 
+func (c *priceFetcherClient) FetchPriceServerStreaming(ctx context.Context, in *SymbolsList, opts ...grpc.CallOption) (PriceFetcher_FetchPriceServerStreamingClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PriceFetcher_ServiceDesc.Streams[0], "/PriceFetcher/FetchPriceServerStreaming", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &priceFetcherFetchPriceServerStreamingClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type PriceFetcher_FetchPriceServerStreamingClient interface {
+	Recv() (*PriceResponse, error)
+	grpc.ClientStream
+}
+
+type priceFetcherFetchPriceServerStreamingClient struct {
+	grpc.ClientStream
+}
+
+func (x *priceFetcherFetchPriceServerStreamingClient) Recv() (*PriceResponse, error) {
+	m := new(PriceResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PriceFetcherServer is the server API for PriceFetcher service.
 // All implementations must embed UnimplementedPriceFetcherServer
 // for forward compatibility
 type PriceFetcherServer interface {
 	FetchPrice(context.Context, *PriceRequest) (*PriceResponse, error)
+	FetchPriceServerStreaming(*SymbolsList, PriceFetcher_FetchPriceServerStreamingServer) error
 	mustEmbedUnimplementedPriceFetcherServer()
 }
 
@@ -56,6 +90,9 @@ type UnimplementedPriceFetcherServer struct {
 
 func (UnimplementedPriceFetcherServer) FetchPrice(context.Context, *PriceRequest) (*PriceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FetchPrice not implemented")
+}
+func (UnimplementedPriceFetcherServer) FetchPriceServerStreaming(*SymbolsList, PriceFetcher_FetchPriceServerStreamingServer) error {
+	return status.Errorf(codes.Unimplemented, "method FetchPriceServerStreaming not implemented")
 }
 func (UnimplementedPriceFetcherServer) mustEmbedUnimplementedPriceFetcherServer() {}
 
@@ -88,6 +125,27 @@ func _PriceFetcher_FetchPrice_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PriceFetcher_FetchPriceServerStreaming_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SymbolsList)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PriceFetcherServer).FetchPriceServerStreaming(m, &priceFetcherFetchPriceServerStreamingServer{stream})
+}
+
+type PriceFetcher_FetchPriceServerStreamingServer interface {
+	Send(*PriceResponse) error
+	grpc.ServerStream
+}
+
+type priceFetcherFetchPriceServerStreamingServer struct {
+	grpc.ServerStream
+}
+
+func (x *priceFetcherFetchPriceServerStreamingServer) Send(m *PriceResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // PriceFetcher_ServiceDesc is the grpc.ServiceDesc for PriceFetcher service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +158,12 @@ var PriceFetcher_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PriceFetcher_FetchPrice_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "FetchPriceServerStreaming",
+			Handler:       _PriceFetcher_FetchPriceServerStreaming_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "proto/service.proto",
 }
