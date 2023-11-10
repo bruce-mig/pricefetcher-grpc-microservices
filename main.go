@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"time"
 
@@ -39,6 +40,34 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Printf("%+v\n", resp)
+	}()
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		log.Print("Streaming started")
+		symbols := &pb.SymbolsList{
+			Symbols: []*pb.PriceRequest{
+				{Symbol: "AAPL"},
+				{Symbol: "GOOG"},
+				{Symbol: "MSFT"},
+			},
+		}
+		stream, err := grpcClient.FetchPriceServerStreaming(ctx, symbols)
+		if err != nil {
+			log.Fatalf("Could not send symbols: %v", err)
+		}
+
+		for {
+			message, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while streaming %v", err)
+			}
+			log.Println(message)
+		}
+		log.Printf("Streaming finished")
 	}()
 
 	go makeGRPCServerAndRun(*grpcAddr, svc)
