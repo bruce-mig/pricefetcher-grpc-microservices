@@ -14,6 +14,7 @@ import (
 // PriceService is an interface that can fetch the price for any given symbol.
 type PriceService interface {
 	FetchPrice(context.Context, string) ([]byte, error)
+	// FetchPriceServerStreaming(context.Context, []string) error
 }
 
 type priceService struct{}
@@ -49,7 +50,7 @@ type loggingService struct {
 
 func (s loggingService) FetchPrice(ctx context.Context, symbol string) (body []byte, err error) {
 	defer func(begin time.Time) {
-		reqID := ctx.Value("requestID")
+		reqID := ctx.Value(requestIDKey)
 
 		logrus.WithFields(logrus.Fields{
 			"requestID": reqID,
