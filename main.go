@@ -1,17 +1,15 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
-	"io"
 	"log"
-	"time"
+	"sync"
 
 	"github.com/bruce-mig/pricefetcher-grpc-microservices/client"
-	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/proto"
 	"github.com/joho/godotenv"
 )
+
+var wg *sync.WaitGroup
 
 func main() {
 
@@ -23,55 +21,38 @@ func main() {
 		jsonAddr = flag.String("jsonAddr", ":3000", "listen address of the json service")
 		grpcAddr = flag.String("grpcAddr", ":4000", "listen address of the grpc service")
 		svc      = loggingService{&priceService{}}
-		ctx      = context.Background()
 	)
 
 	flag.Parse()
 
-	grpcClient, err := client.NewGRPCClient(":4000")
+	// grpcClient, err :=
+	client.NewGRPCClient(":4000")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	go func() {
-		time.Sleep(3 * time.Second)
-		resp, err := grpcClient.FetchPrice(ctx, &pb.PriceRequest{Symbol: "MSFT"})
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("%+v\n", resp)
-	}()
+	// wg = &sync.WaitGroup{}
 
-	go func() {
-		time.Sleep(3 * time.Second)
-		log.Print("Streaming started")
-		symbols := &pb.SymbolsList{
-			Symbols: []*pb.PriceRequest{
-				{Symbol: "AAPL"},
-				{Symbol: "GOOG"},
-				{Symbol: "MSFT"},
-			},
-		}
-		stream, err := grpcClient.FetchPriceServerStreaming(ctx, symbols)
-		if err != nil {
-			log.Fatalf("Could not send symbols: %v", err)
-		}
+	// symbols := &pb.SymbolsList{
+	// 	Symbols: []*pb.PriceRequest{
+	// 		{Symbol: "AAPL"},
+	// 		{Symbol: "GOOG"},
+	// 		{Symbol: "MSFT"},
+	// 	},
+	// }
 
-		for {
-			message, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatalf("Error while streaming %v", err)
-			}
-			log.Println(message)
-		}
-		log.Printf("Streaming finished")
-	}()
+	// // wg.Add(1)
+	// go client.CallFetchPrice(wg, grpcClient, symbols)
 
-	go makeGRPCServerAndRun(*grpcAddr, svc)
+	// wg.Add(1)
+	// go client.CallFetchPriceServerStreaming(wg, grpcClient, symbols)
+
+	// // wg.Add(1)
+	// // // go client.CallFetchPriceBidirectionalStreaming(wg, grpcClient, symbols)
+
+	go makeGRPCServerAndRun(wg, *grpcAddr, svc)
 
 	jsonServer := NewJSONAPIServer(*jsonAddr, svc)
 	jsonServer.Run()
+	// wg.Wait()
 }
