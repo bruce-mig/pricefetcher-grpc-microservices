@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type PriceFetcherClient interface {
 	FetchPrice(ctx context.Context, in *PriceRequest, opts ...grpc.CallOption) (*PriceResponse, error)
 	FetchPriceServerStreaming(ctx context.Context, in *SymbolsList, opts ...grpc.CallOption) (PriceFetcher_FetchPriceServerStreamingClient, error)
+	FetchPriceBidirectionalStreaming(ctx context.Context, opts ...grpc.CallOption) (PriceFetcher_FetchPriceBidirectionalStreamingClient, error)
 }
 
 type priceFetcherClient struct {
@@ -75,12 +76,44 @@ func (x *priceFetcherFetchPriceServerStreamingClient) Recv() (*PriceResponse, er
 	return m, nil
 }
 
+func (c *priceFetcherClient) FetchPriceBidirectionalStreaming(ctx context.Context, opts ...grpc.CallOption) (PriceFetcher_FetchPriceBidirectionalStreamingClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PriceFetcher_ServiceDesc.Streams[1], "/PriceFetcher/FetchPriceBidirectionalStreaming", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &priceFetcherFetchPriceBidirectionalStreamingClient{stream}
+	return x, nil
+}
+
+type PriceFetcher_FetchPriceBidirectionalStreamingClient interface {
+	Send(*PriceRequest) error
+	Recv() (*PriceResponse, error)
+	grpc.ClientStream
+}
+
+type priceFetcherFetchPriceBidirectionalStreamingClient struct {
+	grpc.ClientStream
+}
+
+func (x *priceFetcherFetchPriceBidirectionalStreamingClient) Send(m *PriceRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *priceFetcherFetchPriceBidirectionalStreamingClient) Recv() (*PriceResponse, error) {
+	m := new(PriceResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PriceFetcherServer is the server API for PriceFetcher service.
 // All implementations must embed UnimplementedPriceFetcherServer
 // for forward compatibility
 type PriceFetcherServer interface {
 	FetchPrice(context.Context, *PriceRequest) (*PriceResponse, error)
 	FetchPriceServerStreaming(*SymbolsList, PriceFetcher_FetchPriceServerStreamingServer) error
+	FetchPriceBidirectionalStreaming(PriceFetcher_FetchPriceBidirectionalStreamingServer) error
 	mustEmbedUnimplementedPriceFetcherServer()
 }
 
@@ -93,6 +126,9 @@ func (UnimplementedPriceFetcherServer) FetchPrice(context.Context, *PriceRequest
 }
 func (UnimplementedPriceFetcherServer) FetchPriceServerStreaming(*SymbolsList, PriceFetcher_FetchPriceServerStreamingServer) error {
 	return status.Errorf(codes.Unimplemented, "method FetchPriceServerStreaming not implemented")
+}
+func (UnimplementedPriceFetcherServer) FetchPriceBidirectionalStreaming(PriceFetcher_FetchPriceBidirectionalStreamingServer) error {
+	return status.Errorf(codes.Unimplemented, "method FetchPriceBidirectionalStreaming not implemented")
 }
 func (UnimplementedPriceFetcherServer) mustEmbedUnimplementedPriceFetcherServer() {}
 
@@ -146,6 +182,32 @@ func (x *priceFetcherFetchPriceServerStreamingServer) Send(m *PriceResponse) err
 	return x.ServerStream.SendMsg(m)
 }
 
+func _PriceFetcher_FetchPriceBidirectionalStreaming_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PriceFetcherServer).FetchPriceBidirectionalStreaming(&priceFetcherFetchPriceBidirectionalStreamingServer{stream})
+}
+
+type PriceFetcher_FetchPriceBidirectionalStreamingServer interface {
+	Send(*PriceResponse) error
+	Recv() (*PriceRequest, error)
+	grpc.ServerStream
+}
+
+type priceFetcherFetchPriceBidirectionalStreamingServer struct {
+	grpc.ServerStream
+}
+
+func (x *priceFetcherFetchPriceBidirectionalStreamingServer) Send(m *PriceResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *priceFetcherFetchPriceBidirectionalStreamingServer) Recv() (*PriceRequest, error) {
+	m := new(PriceRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PriceFetcher_ServiceDesc is the grpc.ServiceDesc for PriceFetcher service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -163,6 +225,12 @@ var PriceFetcher_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "FetchPriceServerStreaming",
 			Handler:       _PriceFetcher_FetchPriceServerStreaming_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "FetchPriceBidirectionalStreaming",
+			Handler:       _PriceFetcher_FetchPriceBidirectionalStreaming_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "proto/service.proto",
