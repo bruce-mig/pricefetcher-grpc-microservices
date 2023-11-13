@@ -5,6 +5,7 @@ option go_package = "github.com/bruce-mig/pricefetcher-grpc-microservices";
 service PriceFetcher {
     rpc FetchPrice(PriceRequest) returns (PriceResponse);
     rpc FetchPriceServerStreaming(SymbolsList) returns (stream PriceResponse);
+    rpc FetchPriceBidirectionalStreaming(stream PriceRequest) returns (stream PriceResponse);
 }
 
 message PriceRequest {
