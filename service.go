@@ -14,7 +14,6 @@ import (
 // PriceService is an interface that can fetch the price for any given symbol.
 type PriceService interface {
 	FetchPrice(context.Context, string) ([]byte, error)
-	// FetchPriceServerStreaming(context.Context, []string) error
 }
 
 type priceService struct{}
