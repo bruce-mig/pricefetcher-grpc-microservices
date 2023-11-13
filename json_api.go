@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	"github.com/bruce-mig/pricefetcher-grpc-microservices/types"
@@ -14,6 +15,7 @@ type APIFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request) e
 func makeAPIFunc(fn APIFunc) http.HandlerFunc {
 	ctx := context.Background()
 	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := rand.Intn(100000)
 		ctx = context.WithValue(ctx, requestIDKey, reqID)
 
 		if err := fn(ctx, w, r); err != nil {
