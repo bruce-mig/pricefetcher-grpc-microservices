@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/proto"
+	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
