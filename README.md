@@ -1,4 +1,4 @@
-# A gRPC microservice written in Golang
+# A gRPC Stock Price Fetcher microservice
 
 # Installing protobuffer
 
