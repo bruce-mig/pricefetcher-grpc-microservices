@@ -12,6 +12,7 @@ import (
 
 	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -32,8 +33,13 @@ func makeGRPCServerAndRun(wg *sync.WaitGroup, listenAddr string, svc PriceServic
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
 	pb.RegisterPriceFetcherServer(server, grpcPriceFetcher)
-	return server.Serve(ln)
 
+	// Register reflection service on gRPC server
+	reflection.Register(server)
+	if err := server.Serve(ln); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+	}
+	return err
 }
 
 type GRPCPriceFetcherServer struct {
