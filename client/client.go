@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/proto"
+	pb "github.com/bruce-mig/pricefetcher-grpc-microservices/pb"
 	"github.com/bruce-mig/pricefetcher-grpc-microservices/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -19,7 +19,7 @@ import (
 var ctx, _ = context.WithTimeout(context.Background(), 3000*time.Second)
 
 func NewGRPCClient(remoteAddr string) (pb.PriceFetcherClient, error) {
-	conn, err := grpc.Dial(remoteAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(remoteAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func NewGRPCClient(remoteAddr string) (pb.PriceFetcherClient, error) {
 // gRPC Client
 func CallFetchPrice(wg *sync.WaitGroup, grpcClient pb.PriceFetcherClient, symbols *pb.SymbolsList) {
 	// defer wg.Done()
-	time.Sleep(3 * time.Second)
+	// time.Sleep(3 * time.Second)
 	resp, err := grpcClient.FetchPrice(ctx, symbols.Symbols[0])
 	if err != nil {
 		log.Fatal(err)
@@ -65,7 +65,7 @@ func CallFetchPriceServerStreaming(wg *sync.WaitGroup, grpcClient pb.PriceFetche
 }
 
 func CallFetchPriceBidirectionalStreaming(wg *sync.WaitGroup, grpcClient pb.PriceFetcherClient, symbols *pb.SymbolsList) {
-	defer wg.Done()
+	// defer wg.Done()
 	log.Printf("Bidirectional Streaming Started")
 	stream, err := grpcClient.FetchPriceBidirectionalStreaming(ctx)
 	if err != nil {
@@ -93,7 +93,7 @@ func CallFetchPriceBidirectionalStreaming(wg *sync.WaitGroup, grpcClient pb.Pric
 		if err := stream.Send(req); err != nil {
 			log.Fatalf("Error while sending %v", err)
 		}
-		time.Sleep(2 * time.Second)
+		// time.Sleep(2 * time.Second)
 	}
 	stream.CloseSend()
 	<-waitCh
