@@ -6,7 +6,7 @@ This service exposes:
 
 It fetches real-time/near real-time U.S. stock quote data from Twelve Data via RapidAPI and returns a normalized response:
 
-```
+```json
 {
   "symbol": "GOOGL",
   "name": "Alphabet Inc.",
@@ -25,7 +25,7 @@ It fetches real-time/near real-time U.S. stock quote data from Twelve Data via R
 ### Environment configuration
 Create a `.env` file in the project root with the following variables. These are required for the app to run:
 
-```
+```bash
 XRapidAPIKey=<your-rapidapi-key>
 API_URL=https://twelve-data1.p.rapidapi.com/quote?
 XRapidAPIHost2=twelve-data1.p.rapidapi.com
